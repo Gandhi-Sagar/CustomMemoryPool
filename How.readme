@@ -1,0 +1,90 @@
+"My Implementation" 
+
+
+Files included: 
+
+Pool.h - Contains layout of CPool class
+Pool.cpp - Implementing All the required functions.
+TestCases.h - Example test classes
+main.cpp - Test cases which auto-test classes from 	TestCases.h, picks the 'Type' to test at random.
+
+----------------------------------------------------------------
+
+Changes needed on client side:
+
+1. Must create a one Pool for each object he/she wishes to pool
+2. Must call Allocate() and DeAllocate() functions on CPool  	classes object
+
+	Syntax e.g.: 
+		objDer = (Derived*) oDerivedPool.Allocate();
+		.. do something with Derived classes object.. 
+		oDerivedPool.DeAllocate(objDer)
+
+3. Must DestroyPool() after done with using the pool
+
+4. If you know that your object is going to take less than 4 Bytes, then you must allocate extra 4 Bytes space. So carefully pass the parameters to CreatePool(). This is one of the implementation limitation. But in order to gain performance on other objects this sacrifice seems must.
+
+----------------------------------------------------------------
+Test Cases:
+
+All test cases in TestCases are written in main.cpp.
+It tests classes at random.
+
+Input - Nothing, if you wish to test multiple classes, run the program multiple times, or may be in a loop
+
+Output: Whichever pool is created, time taken to create and destroy objects is printed at the end of program
+----------------------------------------------------------------
+
+Complexities:
+
+Time:  All the four functions take O(1) ie. constant time to perform operations. 
+
+CreatePool(): Assumed that the time new takes is constant wrt environment, this function just assignes some pointers for bookkeeping
+
+Allocate(): This functions return next free block from pre-allocated pool. Does some bookkeeping, no loop or recursions, so time is constant, O(1)
+
+DeAllocate(): Simply tries to free the block from preallocated memory. Does some bookkeeping, no loops here as well
+
+DestroyPool(): Assumed that delete is going to take constant time wrt environment, this function deletes entire pool. 
+
+
+Space: Pool always takes space requred to contain MAX_POSSIBLE objects. 
+
+Alternatives Available: 
+	1. First create pool of size 0. Then as objects are allocated increase sizeof pool by (2 ^ current_size_index)
+	2. So pool will have sizes 0, 1, 2, 4, 16, 32, 64 and so on
+	3. Every time pool is resized, you need to copy containts of old pool to the new pool using memcpy() or some other method. Also, you need to "Attach" bookkeeping pointers appropriately
+
+Why space complexity is high: Alternative described above is NOT used currently.
+	1. This implementation targets speed. we need speed, more and more speed. 
+	2. This system will beat raw new and delete. But if we think of alternatives, what about vectors? Vectors are part of STL so there may be many implementations of it
+	3. I am aware of MS implementation which works the way described in alternative. I was willing to do something faster than that. So memory is compromised.(More on this at the end of document)
+	4. As stated in Problem Statement, one of the use case is graphics rendering program, there you are supposed to have a good amount of memory, so this rather bold step is taken
+
+Exception: If sizeof(Type) is less than 4 bytes, we would need additional 4 bytes in order to perform bookkeeping. This care could be easily taken from Pool.Cpp, but intentionally, user of the class is asked to take care of this. I think Pooling System should be more in control of user, so rather than disadvantage this is rather advantage that user of the system is knowing what is going on
+
+----------------------------------------------------------------
+Other Important Characteristics:
+
+Generic: 
+	1. You can pool any object you want and it is garanteed that any object pooling will be done in constant time. 
+	2. You may well use systems new and delete. Just be careful with what you are doing. Mixing Pooling System and OS's new and delete in same code block should be done with utmost care. 
+
+Platform Independent:
+	1. This kind of code should be reused irrespective of you are coding on Unices or Windows. This is well taken care of. Conditional coding is only present to test benchmarking. Code is 100% compatible in Windows and Linux. I have not tested it on Mac, but underneath Mac is also Unix. 
+
+---------------------------------------------------------------
+
+Structure: 
+	1. I, myself, am not satisfied with the design of the system. This code be done more elegently. For e.g. user can call DeAllocate() before even creating pool. A good design could have been where it is IMPOSSIBLE to call the functions if pre-conditions are not met.
+	2. Proposed Approach: We can use COM model of programming under Windows and can easily replicate same on Unix style systems though there will not be any COM engine present(that I am aware of).
+	3. General layout: Wrap CPool class as Component class, and have Interface wrapper IPool, which would just allow user to call underlying functions. This is done using POinter-to-pointer dynamic-call-dispatching. So user will not have any idea about functions unless stated otherwise.
+	4. I am little worried about performance of the system, since dynamic call dispatching comes at a cost. The basic need of designing this system is to gain speed. 
+----------------------------------------------------------------
+
+Benchmarking:
+	1.0 I have tested system for Windows-7, Ubuntu creating 32 bit binaries. It beats new/delete. This is not tested for malloc/free pair. It is almost near to vectors
+
+	Benchmarking code is present in main.cpp, you can simply test it. (code for new/delete is removed)
+
+----------------------------------------------------------------

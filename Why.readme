@@ -1,0 +1,17 @@
+"Problem Statement" 
+
+The speed at which memory for an object can be allocated and deallocated using either malloc/free or new/delete can often pose a problem. Both new/delete and malloc/free are general purpose allocators that 
+typically have to:
+
+- Handle arbitrary allocation sizes, in any order; 
+- Minimise any resulting memory fragmentation;
+- Make the best use of operating system features such as virtual memory;
+
+This complexity can make them under-perform simpler schemes for some common usage patterns. This is often the case for relatively small objects that are frequently individually allocated/deallocated. 
+
+A real world example of this would be a an 3D Model Editing Software such as Blender. Such an program  would most likely have to regularly create and delete individual vertices, half-edges, edges and faces in an unpredictable fashion. 
+
+A common technique for improving memory efficiency for this case is to create 'pools' of memory for the frequently allocated objects in advance. The frequently allocated objects can then be quickly retrieved/returned from/to the pool when they are allocated/deallocated. In addition, because all individual 'allocations' within the pool are the same size the pool will not suffer from any memory fragmentation.
+
+A single pool should handle this form of basic memory management for just one class of object, so i would create a separate pool for each type object you are concerned with. Since each pool only has to handle the allocation/deallocation of small fixed-sized amounts of memory it can be implemented to run considerably 
+quicker than a general purpose allocator.
